@@ -1,0 +1,9 @@
+# Emacs backups
+*~
+
+# Emacs autosave
+\#*\#
+.\#*
+
+# Emacs lock files (optional)
+*.#*

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"go/token"
 	"sync"
 	"time"
 )
@@ -24,8 +23,8 @@ func ThrottleSimple(effector Effector, count int, d time.Duration) Effector {
 			nextReset = time.Now().Add(d)
 		}
 
-		if count > 0 {
-			count--
+		if countLeft > 0 {
+			countLeft--
 			result, err := effector(ctx)
 			return result, err
 		}

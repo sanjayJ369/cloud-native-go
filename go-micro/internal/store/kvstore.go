@@ -1,18 +1,5 @@
 package store
 
-import "errors"
-
-// globals
-
-// basic key value store interface
-type Store interface {
-	Put(string, string) error
-	Get(string) (string, error)
-	Del(string) error
-}
-
-var ErrorNoSuchKey = errors.New("no such key")
-
 type KVStore struct {
 	m map[string]string
 }
@@ -39,12 +26,12 @@ func (k *KVStore) Get(key string) (string, error) {
 }
 
 // return val that is being deleted and error
-func (k *KVStore) Del(key string) (string, error) {
-	val, ok := k.m[key]
+func (k *KVStore) Del(key string) error {
+	_, ok := k.m[key]
 	if !ok {
-		return "", ErrorNoSuchKey
+		return ErrorNoSuchKey
 	}
 
 	delete(k.m, key)
-	return val, nil
+	return nil
 }

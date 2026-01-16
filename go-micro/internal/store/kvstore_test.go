@@ -69,7 +69,7 @@ func TestKVStore(t *testing.T) {
 		}
 
 		for _, tc := range testcases {
-			err := kvstore.Del(tc.key)
+			_, err := kvstore.Del(tc.key)
 
 			if tc.wantErr {
 				assert.Error(t, err)

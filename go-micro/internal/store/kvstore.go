@@ -26,12 +26,12 @@ func (k *KVStore) Get(key string) (string, error) {
 }
 
 // return val that is being deleted and error
-func (k *KVStore) Del(key string) error {
-	_, ok := k.m[key]
+func (k *KVStore) Del(key string) (string, error) {
+	val, ok := k.m[key]
 	if !ok {
-		return ErrorNoSuchKey
+		return "", ErrorNoSuchKey
 	}
 
 	delete(k.m, key)
-	return nil
+	return val, nil
 }

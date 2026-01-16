@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.21.12
-// source: store.proto
+// source: proto/store/store.proto
 
 package store
 
@@ -20,6 +20,8 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	StoreService_GetHandler_FullMethodName = "/store.StoreService/GetHandler"
+	StoreService_PutHandler_FullMethodName = "/store.StoreService/PutHandler"
+	StoreService_DelHandler_FullMethodName = "/store.StoreService/DelHandler"
 )
 
 // StoreServiceClient is the client API for StoreService service.
@@ -27,6 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type StoreServiceClient interface {
 	GetHandler(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
+	PutHandler(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
+	DelHandler(ctx context.Context, in *DelRequest, opts ...grpc.CallOption) (*DelResponse, error)
 }
 
 type storeServiceClient struct {
@@ -47,11 +51,33 @@ func (c *storeServiceClient) GetHandler(ctx context.Context, in *GetRequest, opt
 	return out, nil
 }
 
+func (c *storeServiceClient) PutHandler(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PutResponse)
+	err := c.cc.Invoke(ctx, StoreService_PutHandler_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *storeServiceClient) DelHandler(ctx context.Context, in *DelRequest, opts ...grpc.CallOption) (*DelResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DelResponse)
+	err := c.cc.Invoke(ctx, StoreService_DelHandler_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // StoreServiceServer is the server API for StoreService service.
 // All implementations must embed UnimplementedStoreServiceServer
 // for forward compatibility.
 type StoreServiceServer interface {
 	GetHandler(context.Context, *GetRequest) (*GetResponse, error)
+	PutHandler(context.Context, *PutRequest) (*PutResponse, error)
+	DelHandler(context.Context, *DelRequest) (*DelResponse, error)
 	mustEmbedUnimplementedStoreServiceServer()
 }
 
@@ -64,6 +90,12 @@ type UnimplementedStoreServiceServer struct{}
 
 func (UnimplementedStoreServiceServer) GetHandler(context.Context, *GetRequest) (*GetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetHandler not implemented")
+}
+func (UnimplementedStoreServiceServer) PutHandler(context.Context, *PutRequest) (*PutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PutHandler not implemented")
+}
+func (UnimplementedStoreServiceServer) DelHandler(context.Context, *DelRequest) (*DelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DelHandler not implemented")
 }
 func (UnimplementedStoreServiceServer) mustEmbedUnimplementedStoreServiceServer() {}
 func (UnimplementedStoreServiceServer) testEmbeddedByValue()                      {}
@@ -104,6 +136,42 @@ func _StoreService_GetHandler_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _StoreService_PutHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PutRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StoreServiceServer).PutHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StoreService_PutHandler_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoreServiceServer).PutHandler(ctx, req.(*PutRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _StoreService_DelHandler_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(StoreServiceServer).DelHandler(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: StoreService_DelHandler_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(StoreServiceServer).DelHandler(ctx, req.(*DelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // StoreService_ServiceDesc is the grpc.ServiceDesc for StoreService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -115,7 +183,15 @@ var StoreService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetHandler",
 			Handler:    _StoreService_GetHandler_Handler,
 		},
+		{
+			MethodName: "PutHandler",
+			Handler:    _StoreService_PutHandler_Handler,
+		},
+		{
+			MethodName: "DelHandler",
+			Handler:    _StoreService_DelHandler_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "store.proto",
+	Metadata: "proto/store/store.proto",
 }

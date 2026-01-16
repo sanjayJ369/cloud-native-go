@@ -29,8 +29,12 @@ func (s *StoreServer) GetHandler(ctx context.Context, req *store.GetRequest) (*s
 	key := req.GetKey()
 	res := &store.GetResponse{Value: ""}
 	val, err := s.KVStore.Get(key)
-	if err != nil {
+
+	if errors.Is(err, ErrorNoSuchKey) {
 		return res, status.Errorf(codes.NotFound, "key:%s not found", key)
+	}
+	if err != nil {
+		return res, status.Errorf(codes.Internal, "internal server error: %s", err)
 	}
 
 	res.Value = val
@@ -54,9 +58,14 @@ func (s *StoreServer) DelHandler(ctx context.Context, req *store.DelRequest) (*s
 	key := req.GetKey()
 	res := &store.DelResponse{}
 	val, err := s.KVStore.Del(key)
+
+	if errors.Is(err, ErrorNoSuchKey) {
+		return res, status.Errorf(codes.NotFound, "key:%s not found", key)
+	}
 	if err != nil {
 		return res, status.Errorf(codes.Internal, "internal server error: %s", err)
 	}
+
 	res.Key = key
 	res.Value = val
 	return res, nil

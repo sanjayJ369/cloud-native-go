@@ -7,3 +7,5 @@
 
 # Emacs lock files (optional)
 *.#*
+
+*.log

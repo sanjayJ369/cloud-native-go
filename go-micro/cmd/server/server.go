@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"go-micro/internal/api"
 	db "go-micro/internal/store"
+	tl "go-micro/internal/transationLogger"
 	pb "go-micro/proto/store"
+	"log"
 	"net"
 	"strconv"
 
@@ -12,14 +15,22 @@ import (
 )
 
 type Server struct {
-	s db.Store
+	s      db.Store
+	logger tl.TransactionLogger
 }
 
-func NewServer(s db.Store) *Server {
+func NewServer(s db.Store, logger tl.TransactionLogger) *Server {
+	err := tl.InitalizeTrasactionLogger(logger, s)
+	if err != nil {
+		log.Fatalf("error initalizting logger: %s", err)
+	}
+
 	return &Server{
-		s: s,
+		s:      s,
+		logger: logger,
 	}
 }
+
 func (s *Server) ListenAndServe(port int) error {
 	const addr = "0.0.0.0"
 
@@ -29,7 +40,7 @@ func (s *Server) ListenAndServe(port int) error {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterStoreServiceServer(grpcServer, &db.StoreServer{KVStore: s.s})
+	pb.RegisterStoreServiceServer(grpcServer, &api.StoreServer{KVStore: s.s, Logger: s.logger})
 	reflection.Register(grpcServer)
 	err = grpcServer.Serve(listener)
 	if err != nil {

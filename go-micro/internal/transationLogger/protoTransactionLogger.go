@@ -1,4 +1,4 @@
-package transationlogger
+package transactionLogger
 
 import (
 	"bufio"

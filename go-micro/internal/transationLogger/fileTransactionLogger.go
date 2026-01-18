@@ -4,6 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
+	"sync/atomic"
 )
 
 type FileTransactionLogger struct {
@@ -33,6 +36,10 @@ func (f *FileTransactionLogger) Err() <-chan error {
 	return f.errors
 }
 
+func (f *FileTransactionLogger) GetLastEventId() uint64 {
+	return atomic.LoadUint64(&f.lastEventId)
+}
+
 // Run function spings up go routine
 // to read the data from the events channel and write to file
 func (f *FileTransactionLogger) Run() {
@@ -44,8 +51,8 @@ func (f *FileTransactionLogger) Run() {
 
 	go func() {
 		for event := range events {
-			f.lastEventId++
-			_, err := fmt.Fprintf(f.file, "%d\t%s\t%s\t%s\n", f.lastEventId, event.EventType, event.Key, event.Value)
+			atomic.AddUint64(&f.lastEventId, 1)
+			_, err := fmt.Fprintf(f.file, "%d\t%d\t%s\t%s\n", f.lastEventId, event.EventType, event.Key, event.Value)
 			if err != nil {
 				errors <- err
 				return
@@ -55,34 +62,61 @@ func (f *FileTransactionLogger) Run() {
 }
 
 func (f *FileTransactionLogger) ReadEvents() (<-chan Event, <-chan error) {
-	scanner := bufio.NewScanner(f.file)
-
 	outEvent := make(chan Event)
 	outError := make(chan error, 1)
 
 	go func() {
-		var e Event
+		e := Event{}
+
+		file, err := os.OpenFile(f.file.Name(), os.O_RDWR, 0755)
+		if err != nil {
+			outError <- fmt.Errorf("error creating file %s: %s", f.file.Name(), err)
+			return
+		}
+
+		scanner := bufio.NewScanner(file)
 
 		defer close(outEvent)
 		defer close(outError)
 
+		atomic.StoreUint64(&f.lastEventId, 0)
+
 		for scanner.Scan() {
 			line := scanner.Text()
 
-			if _, err := fmt.Sscan(line, "%d\t%s\t%s\t%s\n", &e.Id, &e.EventType, &e.Key, &e.Value); err != nil {
-				outError <- err
-				return
+			contents := strings.Split(line, "\t")
+			if num, err := strconv.Atoi(contents[1]); num == EventPut {
+				if err != nil {
+					outError <- fmt.Errorf("invalid event type: %s", err)
+					return
+				}
+
+				if _, err := fmt.Sscanf(line, "%d\t%d\t%s\t%s", &e.Id, &e.EventType, &e.Key, &e.Value); err != nil {
+					outError <- err
+					return
+				}
+			} else {
+				if _, err := fmt.Sscanf(line, "%d\t%d\t%s\t", &e.Id, &e.EventType, &e.Key); err != nil {
+					outError <- err
+					return
+				}
 			}
 
-			if f.lastEventId >= e.Id {
+			if atomic.LoadUint64(&f.lastEventId) >= e.Id {
 				outError <- fmt.Errorf("invalid sequence number")
 				return
 			}
 
-			f.lastEventId = e.Id
+			atomic.StoreUint64(&f.lastEventId, e.Id)
 
 			outEvent <- e
 		}
+
+		if err := scanner.Err(); err != nil {
+			outError <- fmt.Errorf("error reading file: %s", err)
+			return
+		}
+
 	}()
 
 	return outEvent, outError

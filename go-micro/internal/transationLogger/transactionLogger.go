@@ -19,4 +19,5 @@ type TransactionLogger interface {
 	Err() <-chan error
 	Run()
 	ReadEvents() (<-chan Event, <-chan error) // stream the logged event in file
+	GetLastEventId() uint64                   // retuns the number of events written to the file
 }

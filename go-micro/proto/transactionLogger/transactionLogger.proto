@@ -1,0 +1,12 @@
+syntax = "proto3"; 
+
+package protobufLogger;
+
+option go_package = "./proto/protobufLogger"; 
+
+message Event {
+    uint64 id = 1 ;
+    uint32 eventType = 2;  
+    string key = 3; 
+    string value = 4; 
+}
